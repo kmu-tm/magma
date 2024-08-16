@@ -11,8 +11,6 @@
 # limitations under the License.
 
 expected_version="1.20.1"
-second_expected_version="1.21.0"
-ternary_expected_version="1.21.12"
 all_versions_good=true
 
 while IFS= read -r -d '' file
@@ -20,7 +18,7 @@ do
   while read -r line;
   do
     version=$(echo "$line" | awk -F '[]["'"'"']' '{print $2}')
-    if [[ -n $version && $version != "$expected_version" && $version != "$second_expected_version" && $version != "$ternary_expected_version" ]]
+    if [[ -n $version && $version != "$expected_version" ]]
     then
       echo "Found unexpected Go version $version in file $(realpath --relative-to="$MAGMA_ROOT" "$file"):"
       echo "$line"
@@ -31,7 +29,7 @@ do
   while read -r line;
   do
     version=$(echo "$line" | awk '{ print $NF }')
-    if [[ -n $version && $version != "go$expected_version.linux-amd64.tar.gz" && $version != "go$second_expected_version.linux-amd64.tar.gz" && $version != "go$ternary_expected_version.linux-amd64.tar.gz" ]]
+    if [[ -n $version && $version != "go$expected_version.linux-amd64.tar.gz" ]]
     then
       echo "Found unexpected Go version $version in file $(realpath --relative-to="$MAGMA_ROOT" "$file"):"
       echo "$line"
@@ -45,7 +43,7 @@ do
   while read -r line;
   do
     version=$(echo "$line" | awk -F '"' '{print $2}')
-    if [[ -n $version && $version != "$expected_version" && $version != "$second_expected_version" && $version != "$ternary_expected_version" ]]
+    if [[ -n $version && $version != "$expected_version" && $version != "1.21.0" ]]
     then
       echo "Found unexpected Go version $version in file $(realpath --relative-to="$MAGMA_ROOT" "$file"):"
       echo "$line"
@@ -58,7 +56,7 @@ while IFS= read -r -d '' file
 do
   while read -r version;
   do
-    if [[ -n $version && $version != "go$expected_version" && $version != "$second_expected_version" && $version != "$ternary_expected_version" ]]
+    if [[ -n $version && $version != "go$expected_version" ]]
     then
       echo "Found unexpected Go version $version in file $(realpath --relative-to="$MAGMA_ROOT" "$file"):"
       all_versions_good=false

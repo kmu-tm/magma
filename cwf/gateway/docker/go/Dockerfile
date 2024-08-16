@@ -50,12 +50,11 @@ RUN apt-get update && apt-get install -y \
 
 # Golang
 WORKDIR /usr/local
-ARG GOLANG_VERSION="1.21.12"
+ARG GOLANG_VERSION="1.20.1"
 RUN GO_TARBALL="go${GOLANG_VERSION}.linux-amd64.tar.gz" \
-    && curl https://golang.org/dl/${GO_TARBALL} --remote-name --location \
+    && curl https://linuxfoundation.jfrog.io/artifactory/magma-blob/${GO_TARBALL} --remote-name --location \
     && tar -xzf ${GO_TARBALL} \
     && ln -s /usr/local/go/bin/go /usr/local/bin/go \
-    && ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt \
     && rm ${GO_TARBALL}
 
 # Install protobuf compiler.

@@ -30,17 +30,34 @@
 #include "lte/gateway/c/core/oai/common/log.h"
 #include "lte/gateway/c/core/oai/lib/bstr/bstrlib.h"
 #include "lte/gateway/c/core/oai/tasks/ngap/ngap_amf_decoder.h"
-#include "per_decoder.h"
+#include "aper_decoder.h"
 
 int ngap_amf_decode_pdu(Ngap_NGAP_PDU_t* pdu, const_bstring const raw) {
   asn_dec_rval_t dec_ret;
   DevAssert(pdu != NULL);
   DevAssert(blength(raw) != 0);
+
+  // printf("Decoding PDU: length=%d\n", blength(raw));
+  //   for (int i = 0; i < blength(raw); i++) {
+  //       printf("%02x ", (unsigned char)bdata(raw)[i]);
+  //   }
+  //   printf("\n");
   dec_ret = aper_decode(NULL, &asn_DEF_Ngap_NGAP_PDU, (void**)&pdu, bdata(raw),
                         blength(raw), 0, 0);
 
+  // if(0){
+  //   OAILOG_ERROR(LOG_NGAP,"-----------PDU PRINT START-----------\n");
+  //   char *xer_str = NULL;
+  //   asn_fprint(stdout, &asn_DEF_Ngap_NGAP_PDU, pdu);
+  //     if (xer_str != NULL) {
+  //         printf("%s", xer_str);
+  //         free(xer_str);
+  //     }
+  //   OAILOG_ERROR(LOG_NGAP, "-----------PDU PRINT STOP-----------\n");
+  // } 
+
   if (dec_ret.code != RC_OK) {
-    OAILOG_ERROR(LOG_NGAP, "Failed to decode PDU\n");
+    OAILOG_ERROR(LOG_NGAP, "Failed to decode PDU, error code: %d\n", dec_ret.code);
     return -1;
   }
   return 0;
