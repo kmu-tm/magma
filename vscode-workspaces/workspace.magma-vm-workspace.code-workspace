@@ -65,15 +65,19 @@
 		"python.linting.pylintPath": "pylint",
 		"python.testing.pytestEnabled": false,
 		"python.testing.unittestEnabled": false,
-		"editor.formatOnSave": true,
+		"editor.formatOnSave": false,
 		"python.formatting.autopep8Args": [
 			// This should be the same set of flags as ones specified in `lte/gateway/precommit.py`
 			"--select=W191,W291,W292,W293,W391,E131,E2,E3",
 		],
+		"python.workspaceSymbols.": true,
 		"[python]": {
 			"editor.codeActionsOnSave": {
-				"source.organizeImports": true
-			}
+				"source.organizeImports": "explicit"
+			},
+			"editor.defaultFormatter": "ms-python.black-formatter"
 		},
+		"python.formatting.provider": "none",
 	},
 }
+

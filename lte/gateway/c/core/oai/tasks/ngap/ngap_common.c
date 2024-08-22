@@ -35,8 +35,8 @@
 #include "per_encoder.h"
 #include "xer_encoder.h"
 
-int asn_debug = 0;
-int asn1_xer_print = 0;
+int asn_debug = 1;
+int asn1_xer_print = 1;
 
 ssize_t ngap_generate_successful_outcome(uint8_t** buffer, uint32_t* length,
                                          Ngap_ProcedureCode_t procedureCode,
