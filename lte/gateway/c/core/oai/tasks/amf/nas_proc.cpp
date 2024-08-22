@@ -867,6 +867,16 @@ int amf_decrypt_msin_info_answer(itti_amf_decrypted_msin_info_ans_t* aia) {
       " UE ID = " AMF_UE_NGAP_ID_FMT,
       amf_ue_ngap_id);
 
+  OAILOG_DEBUG(LOG_AMF_APP, "Received MSIN: %s", aia->msin);
+
+  OAILOG_DEBUG(LOG_AMF_APP, "Original PLMN: MCC %d%d%d, MNC %d%d%d",
+               ue_context->amf_context.m5_guti.guamfi.plmn.mcc_digit1,
+               ue_context->amf_context.m5_guti.guamfi.plmn.mcc_digit2,
+               ue_context->amf_context.m5_guti.guamfi.plmn.mcc_digit3,
+               ue_context->amf_context.m5_guti.guamfi.plmn.mnc_digit1,
+               ue_context->amf_context.m5_guti.guamfi.plmn.mnc_digit2,
+               ue_context->amf_context.m5_guti.guamfi.plmn.mnc_digit3);
+
   amf_registration_request_ies_t* params =
       new (amf_registration_request_ies_t)();
 
@@ -885,16 +895,65 @@ int amf_decrypt_msin_info_answer(itti_amf_decrypted_msin_info_ans_t* aia) {
   supi_imsi.plmn.mnc_digit3 =
       ue_context->amf_context.m5_guti.guamfi.plmn.mnc_digit3;
 
-  supi_imsi.msin[0] =
-      (uint8_t)(((aia->msin[0] - '0') << 4) | (aia->msin[1] - '0'));
-  supi_imsi.msin[1] =
-      (uint8_t)(((aia->msin[2] - '0') << 4) | (aia->msin[3] - '0'));
-  supi_imsi.msin[2] =
-      (uint8_t)(((aia->msin[4] - '0') << 4) | (aia->msin[5] - '0'));
-  supi_imsi.msin[3] =
-      (uint8_t)(((aia->msin[6] - '0') << 4) | (aia->msin[7] - '0'));
-  supi_imsi.msin[4] =
-      (uint8_t)(((aia->msin[8] - '0') << 4) | (aia->msin[9] - '0'));
+  // Copy PLMN information
+  memcpy(&supi_imsi.plmn, &ue_context->amf_context.m5_guti.guamfi.plmn,
+         sizeof(plmn_t));
+
+  OAILOG_DEBUG(LOG_AMF_APP, "PLMN for IMSI construction: MCC %d%d%d, MNC %d%d",
+               supi_imsi.plmn.mcc_digit1, supi_imsi.plmn.mcc_digit2,
+               supi_imsi.plmn.mcc_digit3, supi_imsi.plmn.mnc_digit1,
+               supi_imsi.plmn.mnc_digit2);
+
+  uint8_t decrypted_msin[5];
+
+  OAILOG_DEBUG(LOG_AMF_APP, "Raw decrypted MSIN: %02x %02x %02x %02x %02x",
+               decrypted_msin[0], decrypted_msin[1], decrypted_msin[2],
+               decrypted_msin[3], decrypted_msin[4]);
+
+  // WORKING, but 0x60?? Potential problem? 0x60 instead of 0x68?
+  OAILOG_DEBUG(LOG_AMF_APP, "Raw aia->msin contents:");
+  for (int i = 0; i < 10; i++) {
+    OAILOG_DEBUG(LOG_AMF_APP, "aia->msin[%d]: 0x%02x ('%c')", i,
+                 (uint8_t)aia->msin[i], aia->msin[i]);
+  }
+
+  OAILOG_DEBUG(LOG_AMF_APP, "Decrypted MSIN (hex):");
+  for (int i = 0; i < 5; i++) {
+    OAILOG_DEBUG(LOG_AMF_APP, "%02x", supi_imsi.msin[i]);
+  }
+
+  for (int i = 0; i < 5; i++) {
+    uint8_t swapped =
+        (uint8_t)(((aia->msin[i] & 0x0F) << 4) | ((aia->msin[i] & 0xF0) >> 4));
+
+    uint8_t high_nibble = (swapped >> 4) & 0x0F;
+    uint8_t low_nibble = swapped & 0x0F;
+
+    // Validate each nibble is a valid
+    if (high_nibble > 9 || low_nibble > 9) {
+      OAILOG_ERROR(LOG_AMF_APP, "Invalid BCD digit in MSIN byte %d: 0x%02x", i,
+                   swapped);
+    }
+
+    supi_imsi.msin[i] = swapped;
+
+    OAILOG_DEBUG(
+        LOG_AMF_APP,
+        "MSIN[%d]: original 0x%02x, swapped 0x%02x (high: %d, low: %d)", i,
+        aia->msin[i], supi_imsi.msin[i], high_nibble, low_nibble);
+  }
+
+  char imsi_str[16];
+  int offset = snprintf(imsi_str, sizeof(imsi_str), "%d%d%d%d%d",
+                        supi_imsi.plmn.mcc_digit1, supi_imsi.plmn.mcc_digit2,
+                        supi_imsi.plmn.mcc_digit3, supi_imsi.plmn.mnc_digit1,
+                        supi_imsi.plmn.mnc_digit2);
+
+  for (int i = 0; i < 5; i++) {
+    offset +=
+        snprintf(imsi_str + offset, sizeof(imsi_str) - offset, "%01d%01d",
+                 (supi_imsi.msin[i] >> 4) & 0x0F, supi_imsi.msin[i] & 0x0F);
+  }
 
   // Copy entire supi_imsi to param->imsi->u.value
   memcpy(&params->imsi->u.value, &supi_imsi, IMSI_BCD8_SIZE);
@@ -908,6 +967,13 @@ int amf_decrypt_msin_info_answer(itti_amf_decrypted_msin_info_ans_t* aia) {
                                (supi_imsi.plmn.mnc_digit3 & 0xf);
   }
 
+  OAILOG_DEBUG(LOG_AMF_APP,
+               "Constructed IMSI: %02x %02x %02x %02x %02x %02x %02x %02x",
+               params->imsi->u.value[0], params->imsi->u.value[1],
+               params->imsi->u.value[2], params->imsi->u.value[3],
+               params->imsi->u.value[4], params->imsi->u.value[5],
+               params->imsi->u.value[6], params->imsi->u.value[7]);
+
   imsi64 = amf_imsi_to_imsi64(params->imsi);
   ue_context->amf_context.imsi64 = imsi64;
 
@@ -919,6 +985,12 @@ int amf_decrypt_msin_info_answer(itti_amf_decrypted_msin_info_ans_t* aia) {
   ue_context->amf_context.m5_guti.guamfi = amf_guti.guamfi;
 
   OAILOG_DEBUG(LOG_AMF_APP, "Handling imsi" IMSI_64_FMT "\n", imsi64);
+
+  uint8_t raw_decrypted[5];
+  // After decryption
+  OAILOG_DEBUG(LOG_AMF_APP, "Raw decrypted: %02x %02x %02x %02x %02x",
+               raw_decrypted[0], raw_decrypted[1], raw_decrypted[2],
+               raw_decrypted[3], raw_decrypted[4]);
 
   params->decode_status = ue_context->amf_context.decode_status;
   imsi_t* p_imsi = params->imsi;
