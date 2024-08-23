@@ -15,11 +15,11 @@ limitations under the License.
 
 import argparse
 from typing import NamedTuple
-from EC import ECDH_SECP256R1, X25519
 
-from lte.protos.subscriberdb import SuciProfile
-from lte.protos.subscriberdb import SuciProfileDBStub
+from lte.protos.subscriberdb_pb2 import SuciProfile
+from lte.protos.subscriberdb_pb2_grpc import SuciProfileDBStub
 from magma.common.rpc_utils import grpc_wrapper
+from magma.subscriberdb.crypto.EC import ECDH_SECP256R1, X25519
 from orc8r.protos.common_pb2 import Void
 
 
