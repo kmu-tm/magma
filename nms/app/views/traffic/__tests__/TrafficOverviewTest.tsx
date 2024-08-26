@@ -39,7 +39,6 @@ const apns = {
         preemption_vulnerability: false,
         priority_level: 15,
       },
-      is_default: false,
     },
     apn_name: 'apn_0',
   },
@@ -55,7 +54,6 @@ const apns = {
         preemption_vulnerability: false,
         priority_level: 10,
       },
-      is_default: false,
     },
     apn_name: 'apn_1',
   },
@@ -320,8 +318,6 @@ describe('<TrafficDashboard APNs/>', () => {
   const networkId = 'test';
 
   beforeEach((): void => {
-    // @ts-ignore
-    delete window.location;
     window.location = {
       pathname: '/nms/test/traffic/apn',
     } as Location;

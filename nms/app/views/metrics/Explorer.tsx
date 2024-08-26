@@ -96,7 +96,7 @@ export default function MetricsExplorer() {
   } = useMagmaAPI(MagmaAPI.metrics.tenantsTargetsMetadataGet, {});
 
   useEffect(() => {
-    fetch('/api/data/LteMetrics')
+    fetch('/data/LteMetrics')
       .then(res => res.json())
       .then(
         (result: Array<MetricsDetail>) => {

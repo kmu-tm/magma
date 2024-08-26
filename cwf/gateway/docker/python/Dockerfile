@@ -8,13 +8,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+ARG CPU_ARCH=x86_64
+ARG DEB_PORT=amd64
+ARG OS_DIST=ubuntu
+ARG OS_RELEASE=focal
 
 # -----------------------------------------------------------------------------
 # Builder image
 # -----------------------------------------------------------------------------
-FROM ubuntu:focal AS builder
-
-ARG DEB_PORT=amd64
+FROM $OS_DIST:$OS_RELEASE AS builder
+ARG CPU_ARCH
+ARG DEB_PORT
 # workaround to avoid interactive tzdata configurtaion
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -76,8 +80,9 @@ COPY cwf/gateway/deploy/roles/ovs/files/magma-preferences /etc/apt/preferences.d
 
 # Add the magma apt repo
 COPY keys/linux_foundation_registry_key.asc /etc/apt/trusted.gpg.d/magma.asc
-RUN add-apt-repository "deb https://linuxfoundation.jfrog.io/artifactory/magma-packages-test focal-ci main" && \
-    add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ focal-proposed restricted main multiverse universe"
+RUN add-apt-repository "deb https://linuxfoundation.jfrog.io/artifactory/magma-packages-test focal-ci main"
+
+#    add-apt-repository "deb http://archive.ubuntu.com/ubuntu/ focal-proposed restricted main multiverse universe"
 
 RUN apt-get -y update && apt-get -y install \
     curl \
@@ -88,7 +93,7 @@ RUN apt-get -y update && apt-get -y install \
     libjemalloc2 \
     libssl-dev \
     libsystemd-dev \
-    magma-nghttpx=1.31.1-1 \
+    nghttp2 \
     net-tools \
     openssl \
     pkg-config \

@@ -1382,9 +1382,8 @@ static void amf_app_handle_ngap_ue_context_release(
 }
 
 void amf_app_handle_ngap_ue_context_release_req(
-    const itti_ngap_ue_context_release_req_t* const ngap_ue_context_release_req)
-
-{
+    const itti_ngap_ue_context_release_req_t* const
+        ngap_ue_context_release_req) {
   amf_app_handle_ngap_ue_context_release(
       ngap_ue_context_release_req->amf_ue_ngap_id,
       ngap_ue_context_release_req->gnb_ue_ngap_id,

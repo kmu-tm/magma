@@ -10,10 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-
-FROM ubuntu:focal AS builder
-
+ARG CPU_ARCH=x86_64
 ARG DEB_PORT=amd64
+ARG OS_DIST=ubuntu
+ARG OS_RELEASE=focal
+
+FROM $OS_DIST:$OS_RELEASE AS builder
+ARG CPU_ARCH
+ARG DEB_PORT
+ARG OS_DIST
+ARG OS_RELEASE
+
 # workaround to avoid interactive tzdata configuration
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -94,7 +101,7 @@ RUN apt-get -y update && apt-get -y install \
     libjemalloc2 \
     libssl-dev \
     libsystemd-dev \
-    magma-nghttpx=1.31.1-1 \
+    nghttp2 \
     net-tools \
     openssl \
     iputils-ping \

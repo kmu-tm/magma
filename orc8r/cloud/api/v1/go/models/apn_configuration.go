@@ -24,9 +24,6 @@ type APNConfiguration struct {
 	// qos profile
 	// Required: true
 	QosProfile *QosProfile `json:"qos_profile"`
-
-	// is default
-	IsDefault *bool `json:"is_default,omitempty"`
 }
 
 // Validate validates this apn configuration

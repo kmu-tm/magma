@@ -39,7 +39,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/random.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -409,11 +408,6 @@ status_code_e mme_api_unsubscribe(bstring apn) {
 }
 
 static tmsi_t generate_random_TMSI() {
-  tmsi_t tmsi = (tmsi_t)0;
-  if (getrandom(reinterpret_cast<void*>(&tmsi), sizeof(tmsi_t), 0) !=
-      sizeof(tmsi_t)) {
-    tmsi = static_cast<tmsi_t>(
-        rand());  // Fallback in case of fundamental system error
-  }
-  return tmsi;
+  // note srand with seed is initialized at main
+  return (tmsi_t)rand();
 }

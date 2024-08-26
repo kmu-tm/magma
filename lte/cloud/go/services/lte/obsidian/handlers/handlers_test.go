@@ -3003,8 +3003,7 @@ func TestListApns(t *testing.T) {
 					PreemptionVulnerability: swag.Bool(false),
 					PriorityLevel:           swag.Uint32(15),
 				},
-				PdnType:   0,
-				IsDefault: swag.Bool(false),
+				PdnType: 0,
 			},
 		},
 		{
@@ -3020,8 +3019,7 @@ func TestListApns(t *testing.T) {
 					PreemptionVulnerability: swag.Bool(false),
 					PriorityLevel:           swag.Uint32(5),
 				},
-				PdnType:   1,
-				IsDefault: swag.Bool(false),
+				PdnType: 1,
 			},
 		},
 	}, serdes.Entity)
@@ -3048,8 +3046,7 @@ func TestListApns(t *testing.T) {
 						PreemptionVulnerability: swag.Bool(false),
 						PriorityLevel:           swag.Uint32(15),
 					},
-					PdnType:   0,
-					IsDefault: swag.Bool(false),
+					PdnType: 0,
 				},
 			},
 			"oai.ims": {
@@ -3065,8 +3062,7 @@ func TestListApns(t *testing.T) {
 						PreemptionVulnerability: swag.Bool(false),
 						PriorityLevel:           swag.Uint32(5),
 					},
-					PdnType:   1,
-					IsDefault: swag.Bool(false),
+					PdnType: 1,
 				},
 			},
 		}),
@@ -3108,8 +3104,7 @@ func TestGetApn(t *testing.T) {
 				PreemptionVulnerability: swag.Bool(false),
 				PriorityLevel:           swag.Uint32(15),
 			},
-			PdnType:   0,
-			IsDefault: swag.Bool(false),
+			PdnType: 0,
 		},
 	}, serdes.Entity)
 	assert.NoError(t, err)
@@ -3134,8 +3129,7 @@ func TestGetApn(t *testing.T) {
 					PreemptionVulnerability: swag.Bool(false),
 					PriorityLevel:           swag.Uint32(15),
 				},
-				PdnType:   0,
-				IsDefault: swag.Bool(false),
+				PdnType: 0,
 			},
 		},
 	}
@@ -3166,7 +3160,6 @@ func TestUpdateApn(t *testing.T) {
 				PreemptionVulnerability: swag.Bool(false),
 				PriorityLevel:           swag.Uint32(5),
 			},
-			IsDefault: swag.Bool(false),
 		},
 	}
 
@@ -3196,7 +3189,6 @@ func TestUpdateApn(t *testing.T) {
 				PreemptionVulnerability: swag.Bool(false),
 				PriorityLevel:           swag.Uint32(15),
 			},
-			IsDefault: swag.Bool(false),
 		},
 	}, serdes.Entity)
 	assert.NoError(t, err)
@@ -3249,7 +3241,6 @@ func TestDeleteApn(t *testing.T) {
 					PreemptionVulnerability: swag.Bool(false),
 					PriorityLevel:           swag.Uint32(15),
 				},
-				IsDefault: swag.Bool(false),
 			},
 		},
 		{
@@ -3265,7 +3256,6 @@ func TestDeleteApn(t *testing.T) {
 					PreemptionVulnerability: swag.Bool(false),
 					PriorityLevel:           swag.Uint32(5),
 				},
-				IsDefault: swag.Bool(false),
 			},
 		},
 	}, serdes.Entity)
@@ -3299,7 +3289,6 @@ func TestDeleteApn(t *testing.T) {
 				PreemptionVulnerability: swag.Bool(false),
 				PriorityLevel:           swag.Uint32(5),
 			},
-			IsDefault: swag.Bool(false),
 		},
 		GraphID: "4",
 		Version: 0,
@@ -4419,7 +4408,6 @@ func newAPN(name string) *lteModels.Apn {
 				MaxBandwidthDl: swag.Uint32(100),
 				MaxBandwidthUl: swag.Uint32(100),
 			},
-			IsDefault: swag.Bool(false),
 			QosProfile: &lteModels.QosProfile{
 				ClassID:                 swag.Int32(9),
 				PreemptionCapability:    swag.Bool(true),

@@ -1067,7 +1067,7 @@ MME_DEPS = [
     "//orc8r/gateway/c/common/service303",
     "//orc8r/protos:redis_cpp_proto",
     "@cpp_redis",
-    "@liblfds//:lfds710",
+    "@system_libraries//:liblfds710",
     "@system_libraries//:czmq",
     "@system_libraries//:libconfig",
     "@system_libraries//:libfd",

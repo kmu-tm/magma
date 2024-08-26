@@ -103,3 +103,9 @@ cc_library(
     name = "libsystemd",
     linkopts = ["-lsystemd"],
 )
+
+cc_library(
+    name = "liblfds710",
+    srcs = ["usr/local/lib/liblfds710.so"],
+    linkopts = ["-llfds710"],
+)

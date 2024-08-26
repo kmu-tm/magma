@@ -1,6 +1,8 @@
 package action_generator
 
 import (
+	sq "github.com/Masterminds/squirrel"
+
 	"magma/dp/cloud/go/services/dp/active_mode_controller/action_generator/action"
 	"magma/dp/cloud/go/services/dp/active_mode_controller/action_generator/sas"
 	"magma/dp/cloud/go/services/dp/active_mode_controller/action_generator/sas/eirp"
@@ -9,13 +11,17 @@ import (
 	"magma/dp/cloud/go/services/dp/storage/db"
 )
 
+type Action interface {
+	Do(sq.BaseRunner, storage.AmcManager) error
+}
+
 type actionGeneratorPerCbsd interface {
-	generateActions(*storage.DetailedCbsd) []action.Action
+	generateActions(*storage.DetailedCbsd) []Action
 }
 
 type nothingGenerator struct{}
 
-func (*nothingGenerator) generateActions(_ *storage.DetailedCbsd) []action.Action {
+func (*nothingGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
 	return nil
 }
 
@@ -27,9 +33,9 @@ type sasGenerator interface {
 	GenerateRequests(*storage.DetailedCbsd) []*storage.MutableRequest
 }
 
-func (s *sasRequestGenerator) generateActions(cbsd *storage.DetailedCbsd) []action.Action {
-	actions := grant.RemoveIdleGrants(cbsd)
+func (s *sasRequestGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
 	reqs := s.g.GenerateRequests(cbsd)
+	actions := make([]Action, 0, len(reqs))
 	for _, r := range reqs {
 		if r != nil {
 			r.Request.CbsdId = cbsd.Cbsd.Id
@@ -41,38 +47,38 @@ func (s *sasRequestGenerator) generateActions(cbsd *storage.DetailedCbsd) []acti
 
 type deleteGenerator struct{}
 
-func (*deleteGenerator) generateActions(cbsd *storage.DetailedCbsd) []action.Action {
-	act := &action.DeleteCbsd{Id: cbsd.Cbsd.Id.Int64}
-	return []action.Action{act}
+func (*deleteGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
+	act := &action.Delete{Id: cbsd.Cbsd.Id.Int64}
+	return []Action{act}
 }
 
 type acknowledgeDeregisterGenerator struct{}
 
-func (a *acknowledgeDeregisterGenerator) generateActions(cbsd *storage.DetailedCbsd) []action.Action {
+func (a *acknowledgeDeregisterGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
 	data := &storage.DBCbsd{
 		Id:               cbsd.Cbsd.Id,
 		ShouldDeregister: db.MakeBool(false),
 	}
 	mask := db.NewIncludeMask("should_deregister")
-	act := &action.UpdateCbsd{Data: data, Mask: mask}
-	return []action.Action{act}
+	act := &action.Update{Data: data, Mask: mask}
+	return []Action{act}
 }
 
 type acknowledgeRelinquishGenerator struct{}
 
-func (a *acknowledgeRelinquishGenerator) generateActions(cbsd *storage.DetailedCbsd) []action.Action {
+func (a *acknowledgeRelinquishGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
 	data := &storage.DBCbsd{
 		Id:               cbsd.Cbsd.Id,
 		ShouldRelinquish: db.MakeBool(false),
 	}
 	mask := db.NewIncludeMask("should_relinquish")
-	act := &action.UpdateCbsd{Data: data, Mask: mask}
-	return []action.Action{act}
+	act := &action.Update{Data: data, Mask: mask}
+	return []Action{act}
 }
 
 type storeAvailableFrequenciesGenerator struct{}
 
-func (s *storeAvailableFrequenciesGenerator) generateActions(cbsd *storage.DetailedCbsd) []action.Action {
+func (s *storeAvailableFrequenciesGenerator) generateActions(cbsd *storage.DetailedCbsd) []Action {
 	calc := eirp.NewCalculator(cbsd.Cbsd)
 	frequencies := grant.CalcAvailableFrequencies(cbsd.Cbsd.Channels, calc)
 	data := &storage.DBCbsd{
@@ -80,8 +86,8 @@ func (s *storeAvailableFrequenciesGenerator) generateActions(cbsd *storage.Detai
 		AvailableFrequencies: frequencies,
 	}
 	mask := db.NewIncludeMask("available_frequencies")
-	act := &action.UpdateCbsd{Data: data, Mask: mask}
-	return []action.Action{act}
+	act := &action.Update{Data: data, Mask: mask}
+	return []Action{act}
 }
 
 type grantManager struct {

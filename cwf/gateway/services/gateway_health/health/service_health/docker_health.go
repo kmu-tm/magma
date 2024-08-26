@@ -17,14 +17,16 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 )
 
-var dockerRequestTimeout int = 3
+const (
+	dockerRequestTimeout = 3 * time.Second
+)
 
 // DockerServiceHealthProvider provides service health for
 // docker containers through docker's API.
@@ -76,12 +78,8 @@ func (d *DockerServiceHealthProvider) Restart(service string) error {
 	if err != nil {
 		return err
 	}
-
-	options := container.StopOptions{
-		Timeout: &dockerRequestTimeout,
-	}
-
-	return d.dockerClient.ContainerRestart(context.Background(), sessiondID, options)
+	timeout := dockerRequestTimeout
+	return d.dockerClient.ContainerRestart(context.Background(), sessiondID, &timeout)
 }
 
 // Stop stops the service provided
@@ -90,12 +88,8 @@ func (d *DockerServiceHealthProvider) Stop(service string) error {
 	if err != nil {
 		return err
 	}
-
-	options := container.StopOptions{
-		Timeout: &dockerRequestTimeout,
-	}
-
-	return d.dockerClient.ContainerStop(context.Background(), serviceID, options)
+	timeout := dockerRequestTimeout
+	return d.dockerClient.ContainerStop(context.Background(), serviceID, &timeout)
 }
 
 func (d *DockerServiceHealthProvider) getContainerID(serviceName string) (string, error) {

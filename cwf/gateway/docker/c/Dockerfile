@@ -15,9 +15,100 @@
 # Builder image for C binaries and Magma proto files
 # -----------------------------------------------------------------------------
 
-ARG OS_DIST=ubuntu OS_RELEASE=focal EXTRA_REPO=https://linuxfoundation.jfrog.io/artifactory/magma-packages-test
+ARG CPU_ARCH=x86_64
+ARG DEB_PORT=amd64
+ARG OS_DIST=ubuntu
+ARG OS_RELEASE=focal
+ARG EXTRA_REPO=https://linuxfoundation.jfrog.io/artifactory/magma-packages-test
+ARG CLANG_VERSION=3.8
+ARG FEATURES=mme_oai
 
-FROM ghcr.io/magma/magma/bazel-cache-plain:latest as builder
+FROM $OS_DIST:$OS_RELEASE AS builder
+ARG CPU_ARCH
+ARG DEB_PORT
+ARG OS_DIST
+ARG OS_RELEASE
+ARG EXTRA_REPO
+ARG CLANG_VERSION
+
+ENV MAGMA_ROOT /magma
+ENV C_BUILD /build/c
+ENV OAI_BUILD $C_BUILD/oai
+ENV TZ=Europe/Paris
+
+ENV CCACHE_DIR ${MAGMA_ROOT}/.cache/gateway/ccache
+ENV MAGMA_DEV_MODE 0
+ENV XDG_CACHE_HOME ${MAGMA_ROOT}/.cache
+
+RUN apt-get update && \
+  # Setup necessary tools for adding the Magma repository
+  apt-get install -y apt-utils software-properties-common apt-transport-https gnupg wget && \
+  # Download Bazel
+  wget -P /usr/sbin --progress=dot:giga https://github.com/bazelbuild/bazelisk/releases/download/v1.10.0/bazelisk-linux-"${DEB_PORT}" && \
+  chmod +x /usr/sbin/bazelisk-linux-"${DEB_PORT}" && \
+  ln -s /usr/sbin/bazelisk-linux-"${DEB_PORT}" /usr/sbin/bazel
+
+# Install dependencies required for building
+RUN apt-get update && apt-get install -y \
+  autoconf \
+  autogen \
+  build-essential \
+  ccache \
+  check \
+  cmake \
+  curl \
+  git \
+  libboost-chrono-dev \
+  libboost-context-dev \
+  libboost-program-options-dev \
+  libboost-filesystem-dev \
+  libboost-regex-dev \
+  libc++-dev \
+  libconfig-dev \
+  libcurl4-openssl-dev \
+  libczmq-dev \
+  libdouble-conversion-dev \
+  libgflags-dev \
+  libgmp3-dev \
+  libgoogle-glog-dev \
+  libmnl-dev \
+  libpcap-dev \
+  libprotoc-dev \
+  libsctp-dev \
+  libsqlite3-dev \
+  libssl-dev \
+  libunwind-dev \
+  libtspi-dev \
+  libtool \
+  libxml2-dev \
+  libxslt-dev \
+  libyaml-cpp-dev \
+  ninja-build \
+  nlohmann-json3-dev \
+  pkg-config \
+  protobuf-compiler \
+  python3-pip \
+  sudo \
+  unzip \
+  uuid-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Add the magma apt repo
+COPY keys/linux_foundation_registry_key.asc /etc/apt/trusted.gpg.d/magma.asc
+RUN echo "deb https://linuxfoundation.jfrog.io/artifactory/magma-packages-test focal-ci main" > /etc/apt/sources.list.d/magma.list
+RUN apt-get update && apt-get install -y \
+  grpc-dev \
+  libfolly-dev \
+  liblfds710 \
+  magma-cpp-redis \
+  magma-libfluid \
+  oai-asn1c \
+  oai-freediameter \
+  oai-gnutls \
+  oai-nettle \
+  prometheus-cpp-dev \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm /etc/apt/sources.list.d/magma.list
 
 ENV MAGMA_ROOT /magma
 WORKDIR /magma
@@ -43,20 +134,25 @@ RUN bazel build //lte/gateway/c/session_manager:sessiond --define=disable_sentry
 # Dev/Production image
 # -----------------------------------------------------------------------------
 FROM $OS_DIST:$OS_RELEASE AS gateway_c
+ARG CPU_ARCH
+ARG OS_DIST
+ARG OS_RELEASE
+ARG EXTRA_REPO
+ARG MAGMA_VERSION=master
 
 # Copy runtime dependencies
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libboost* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libevent-* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libgflags* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libglog* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libsnappy.* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libdouble-conversion.* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libicui18n.* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libicuuc.* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libicudata.* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libssl* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libcrypto* /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libunwind* /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libboost* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libevent-* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libgflags* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libglog* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libsnappy.* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libdouble-conversion.* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libicui18n.* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libicuuc.* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libicudata.* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libssl* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libcrypto* /usr/lib/${CPU_ARCH}-linux-gnu/
+COPY --from=builder /usr/lib/${CPU_ARCH}-linux-gnu/libunwind* /usr/lib/${CPU_ARCH}-linux-gnu/
 COPY --from=builder /usr/local/lib/libfolly.so /usr/local/lib/
 
 RUN ldconfig 2> /dev/null
